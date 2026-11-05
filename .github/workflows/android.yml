@@ -18,25 +18,20 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Build with Gradle
+    - name: Build APK with Gradle
       run: |
         if [ -d "UnityAds-Android-Project" ]; then
           cd UnityAds-Android-Project
         fi
-        sudo apt update && sudo apt install -y gradle || true
-        gradle wrapper --gradle-version 8.7 --distribution-type bin || true
-        chmod +x gradlew || true
+        sudo apt update && sudo apt install -y gradle
+        gradle wrapper --gradle-version 8.7 --distribution-type bin
+        chmod +x gradlew
         ./gradlew assembleDebug --no-daemon --stacktrace
 
-    - name: Upload APK
+    - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Wallpaper-UnityAds-app-debug
         path: "**/build/outputs/apk/debug/*.apk"
         retention-days: 14
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
