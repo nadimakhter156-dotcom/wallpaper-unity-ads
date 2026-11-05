@@ -1,3 +1,4 @@
+
 name: Android CI
 
 on:
@@ -11,40 +12,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Download project source code
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 2. Install Java 17
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
 
+      # 3. Setup Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 4. Accept Android SDK licenses
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | sdkmanager --licenses
+
+      # 5. Setup Gradle 8.7
       - name: Setup Fast Gradle 8.7
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: '8.7'
 
+      # 6. Fix source code and build APK
       - name: Build Debug APK
         run: |
+          set -e
+
+          # Enter Android project directory
           if [ -d "UnityAds-Android-Project" ]; then
             cd UnityAds-Android-Project
           fi
 
-          # 1. Accept Android licenses
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          echo "Checking Android SDK..."
+          echo "ANDROID_HOME=$ANDROID_HOME"
 
-          # 2. Fix source typos automatically
-          sed -i 's/CenterVertigo/CenterVertically/g' app/src/main/java/com/aizoid/unityadsdemo/ui/components/HeaderCard.kt 2>/dev/null || true
-          sed -i 's/@mipmap\/ic_launcher/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml 2>/dev/null || true
-          sed -i 's/@mipmap\/ic_launcher_round/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml 2>/dev/null || true
+          # Fix Kotlin typo
+          if [ -f "app/src/main/java/com/aizoid/unityadsdemo/ui/components/HeaderCard.kt" ]; then
+            sed -i 's/CenterVertigo/CenterVertically/g' app/src/main/java/com/aizoid/unityadsdemo/ui/components/HeaderCard.kt
+          fi
 
-          # 3. Build APK
+          # Fix launcher icon references
+          if [ -f "app/src/main/AndroidManifest.xml" ]; then
+            sed -i 's/@mipmap\/ic_launcher_round/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml
+            sed -i 's/@mipmap\/ic_launcher/@android:drawable\/sym_def_app_icon/g' app/src/main/AndroidManifest.xml
+          fi
+
+          # Build Debug APK
+          echo "Starting APK build..."
+
           gradle assembleDebug --no-daemon --stacktrace
 
+          echo "APK build completed!"
+
+      # 7. Upload APK
       - name: Upload Ready-to-Install APK
         uses: actions/upload-artifact@v4
         with:
           name: Wallpaper-UnityAds-app-debug
           path: "**/build/outputs/apk/debug/*.apk"
+          if-no-files-found: error
           retention-days: 14
