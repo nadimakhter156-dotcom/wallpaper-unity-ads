@@ -1,7 +1,0 @@
-# Unity Ads Proguard Rules
--keep class com.unity3d.ads.** { *; }
--keep interface com.unity3d.ads.** { *; }
--keep class com.unity3d.services.** { *; }
--keep interface com.unity3d.services.** { *; }
--dontwarn com.unity3d.services.**
--dontwarn com.unity3d.ads.**
